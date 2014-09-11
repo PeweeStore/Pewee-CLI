@@ -1,0 +1,42 @@
+{
+  "name": "pewee-cli",
+  "version": "0.0.1",
+  "scripts": {
+    "start": "node ./bin/client"
+  },
+  "bin": {
+    "pewee-cli": "./bin/peweec"
+  },
+
+  "dependencies": {
+    "debug": "~0.7.4",
+    "commander": "*",
+    "checksum": "*",
+    "poster": "*",
+    "aes-helper": "*"
+  },
+  "author": "Vincent Saluzzo <vincentsaluzzo@gmail.com>",
+  "contributors": [
+    {
+      "name": "Vincent Saluzzo",
+      "email": "vincentsaluzzo@gmail.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PeweeStore/Pewee-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/PeweeStore/Pewee-cli/issues"
+  },
+  "license": "GPL-3.0",
+  "keywords": [
+    "pewee",
+    "OTA",
+    "inhouse",
+    "ios",
+    "android",
+    "store",
+    "appstore"
+  ]
+}
