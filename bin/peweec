@@ -51,14 +51,16 @@ if(!appName) {
 
   fs.readFile(primaryKeyFile, function(error, fileData) {
     if(error) {
-      exit(error);
+      console.log("Error in reading primary key file : " + error);
+      process.exit(error);
     } else {
       var primaryKey = fileData.toString();
       var token = aes.encrypt(secureToken, primaryKey);
 
       checksum.file(file, {algorithm: "sha256"}, function(error, checkSum) {
         if(error) {
-          exit(error);
+          console.log("Error in checksuming file : " + error);
+          process.exit(error);
 
         } else {
 
