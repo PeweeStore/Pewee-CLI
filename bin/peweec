@@ -7,7 +7,7 @@ var poster = require('poster');
 var aes = require('aes-helper');
 
 program
-  .version('0.0.1', '-V, --version')
+  .version('0.0.3', '-V, --version')
   .usage('[options] <file>')
   .option('-a, --appname <appname>', 'Uploaded file app name')
   .option('-o, --os <os>', 'Uploaded file os target')
@@ -64,7 +64,7 @@ if(!appName) {
 
         } else {
 
-          var requestUrl = (secure?"https://":"http://") + host + ":" + port + "/upload/" + appName + "/type/" + (os=="android"?"android": "ios") + "/version/" + version + "/" + checkSum;
+          var requestUrl = (secure?"https://":"http://") + host + ":" + port + "/upload/" + encodeURIComponent(appName) + "/type/" + (os=="android"?"android": "ios") + "/version/" + encodeURIComponent(version) + "/" + checkSum;
 
           var options = {
             uploadUrl: requestUrl,
