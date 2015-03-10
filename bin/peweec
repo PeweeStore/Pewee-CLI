@@ -46,7 +46,7 @@ var apkVersion = function(apkPath, callback) {
 
 
 program
-  .version('0.0.5', '-V, --version')
+  .version('0.0.6', '-V, --version')
   .usage('[options] <file>')
   .option('-a, --appname <appname>', 'Uploaded file app name')
   .option('-o, --os <os>', 'Uploaded file os target')
