@@ -13,7 +13,10 @@
     "commander": "*",
     "checksum": "*",
     "aes-helper": "*",
-    "request": "*"
+    "request": "*",
+    "adm-zip": "*",
+    "bplist-parser": "*",
+    "adbkit-apkreader": "*"
   },
   "author": "Vincent Saluzzo <vincentsaluzzo@gmail.com>",
   "contributors": [

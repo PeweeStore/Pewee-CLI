@@ -5,6 +5,46 @@ var checksum = require('checksum');
 var fs = require('fs');
 var aes = require('aes-helper');
 
+
+var AdmZip = require('adm-zip');
+var bplist = require('bplist-parser');
+var ApkReader = require('adbkit-apkreader');
+
+var ipaVersion = function(ipaPath, callback) {
+  var zipped = new AdmZip(ipaPath);
+
+
+  zipped.getEntries().forEach(function(zipEntry) {
+
+    if(zipEntry.entryName.indexOf("storyboard") < 0 && zipEntry.name == "Info.plist" ) {
+
+      zipEntry.getDataAsync(function(data, error)  {
+
+        bplist.parseFile(data, function(error, object) {
+
+          var plistObject= object[0];
+
+          var bundleVersion = plistObject.CFBundleShortVersionString;
+
+          callback(bundleVersion);
+        });
+
+      });
+
+    }
+  });
+
+};
+
+var apkVersion = function(apkPath, callback) {
+
+  var reader = ApkReader.readFile(apkPath);
+  var manifest = reader.readManifestSync();
+  console.log(manifest);
+  callback(manifest.versionName);
+};
+
+
 program
   .version('0.0.5', '-V, --version')
   .usage('[options] <file>')
@@ -16,6 +56,7 @@ program
   .option('-i, --host <host>', 'Address of server')
   .option('-p, --port <port>', 'Port of server')
   .option('-s, --secure', 'use HTTPS SSL layer')
+  .option('-sv, --semanticVersion <build number>', 'If present, don\'t use app version provided and take version in IPA/APK, appending with build number')
   .parse(process.argv);
 
 var appName = program.appname;
@@ -27,6 +68,7 @@ var host = program.host;
 var port = program.port || 80;
 var secure = program.secure;
 var file = program.args[0];
+var semanticVersionBuild = program.semanticVersion;
 
 if(!appName) {
   console.log("No App name defined");
@@ -34,9 +76,9 @@ if(!appName) {
 } else if(!os) {
   console.log("No OS defined");
   process.exit(1);
-} else if(!version) {
-  console.log("No Version defined");
-  process.exit(1);
+} else if(!version && !semanticVersionBuild) {
+    console.log("No Version defined");
+    process.exit(1);
 } else if(!host) {
   console.log("No Host defined");
   process.exit(1);
@@ -48,59 +90,82 @@ if(!appName) {
   process.exit(1);
 } else {
 
-  fs.readFile(primaryKeyFile, function(error, fileData) {
-    if(error) {
-      console.log("Error in reading primary key file : " + error);
-      process.exit(error);
-    } else {
-      var primaryKey = fileData.toString();
-      var token = aes.encrypt(secureToken, primaryKey);
+  var verifyAndSend = function(versionStr) {
+    fs.readFile(primaryKeyFile, function(error, fileData) {
+      if(error) {
+        console.log("Error in reading primary key file : " + error);
+        process.exit(error);
+      } else {
+        var primaryKey = fileData.toString();
+        var token = aes.encrypt(secureToken, primaryKey);
 
-      checksum.file(file, {algorithm: "sha256"}, function(error, checkSum) {
-        if(error) {
-          console.log("Error in checksuming file : " + error);
-          process.exit(error);
+        checksum.file(file, {algorithm: "sha256"}, function(error, checkSum) {
+          if(error) {
+            console.log("Error in checksuming file : " + error);
+            process.exit(error);
 
-        } else {
+          } else {
 
-          var portStr = ""
-          if (secure && port && port != 443) {
-            portStr = ":" + port
-          } else if (secure == false && port && port != 80) {
-            portStr = ":" + port
+            var portStr = ""
+            if (secure && port && port != 443) {
+              portStr = ":" + port
+            } else if (secure == false && port && port != 80) {
+              portStr = ":" + port
+            }
+
+
+            var requestUrl = (secure?"https://":"http://") + host + portStr + "/upload/" + encodeURIComponent(appName) + "/type/" + (os=="android"?"android": "ios") + "/version/" + encodeURIComponent(versionStr) + "/" + checkSum;
+
+            console.log(requestUrl);
+
+            var request = require('request');
+
+            var formData = {
+              file: {
+                value:  fs.createReadStream(file),
+                options: {
+                  filename: 'file',
+                  contentType: 'application/octet-stream'
+                }
+              }
+            };
+            request.post({url:requestUrl, formData: formData, headers: { 'AppToken': token }}, function optionalCallback(err, httpResponse, body) {
+              if (httpResponse && httpResponse.statusCode == 200) {
+                process.exit(0);
+              } else {
+                if (err) {
+                  console.error('upload failed:', err);
+                }
+                process.exit(1)
+              }
+            });
+
           }
+        });
 
-          var requestUrl = (secure?"https://":"http://") + host + portStr + "/upload/" + encodeURIComponent(appName) + "/type/" + (os=="android"?"android": "ios") + "/version/" + encodeURIComponent(version) + "/" + checkSum;
+      }
+    });
+  };
 
-          console.log(requestUrl);
 
-          var request = require('request');
-
-          var formData = {
-            file: {
-              value:  fs.createReadStream(file),
-              options: {
-                filename: 'file',
-                contentType: 'application/octet-stream'
-              }
-            }
-          };
-          request.post({url:requestUrl, formData: formData, headers: { 'AppToken': token }}, function optionalCallback(err, httpResponse, body) {
-            if (httpResponse && httpResponse.statusCode == 200) {
-              process.exit(0);
-            } else {
-              if (err) {
-                console.error('upload failed:', err);
-              }
-              process.exit(1)
-            }
-          });
-
-        }
+  if (semanticVersionBuild) {
+    if (os == "android") {
+      apkVersion(file, function(apkversion) {
+        version = apkversion + "-" + semanticVersionBuild;
+        verifyAndSend(version);
       });
 
+    } else if (os == "ios") {
+      ipaVersion(file, function(ipaversion) {
+        version = ipaversion + "-" + semanticVersionBuild;
+        verifyAndSend(version);
+      });
     }
-  });
+  } else {
+    verifyAndSend(version);
+  }
+
+
 
 
 }
