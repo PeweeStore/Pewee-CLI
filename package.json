@@ -1,6 +1,6 @@
 {
   "name": "pewee-cli",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "scripts": {
     "start": "node ./bin/client"
   },
@@ -12,8 +12,8 @@
     "debug": "~0.7.4",
     "commander": "*",
     "checksum": "*",
-    "poster": "*",
-    "aes-helper": "*"
+    "aes-helper": "*",
+    "request": "*"
   },
   "author": "Vincent Saluzzo <vincentsaluzzo@gmail.com>",
   "contributors": [

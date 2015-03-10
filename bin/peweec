@@ -3,11 +3,11 @@ var debug = require('debug')('InHouseAppStore');
 var program = require('commander');
 var checksum = require('checksum');
 var fs = require('fs');
-var poster = require('poster');
 var aes = require('aes-helper');
+var needle = require('needle');
 
 program
-  .version('0.0.3', '-V, --version')
+  .version('0.0.4', '-V, --version')
   .usage('[options] <file>')
   .option('-a, --appname <appname>', 'Uploaded file app name')
   .option('-o, --os <os>', 'Uploaded file os target')
@@ -64,28 +64,39 @@ if(!appName) {
 
         } else {
 
-          var requestUrl = (secure?"https://":"http://") + host + ":" + port + "/upload/" + encodeURIComponent(appName) + "/type/" + (os=="android"?"android": "ios") + "/version/" + encodeURIComponent(version) + "/" + checkSum;
+          var portStr = ""
+          if (secure && port && port != 443) {
+            portStr = ":" + port
+          } else if (secure == false && port && port != 80) {
+            portStr = ":" + port
+          }
 
-          var options = {
-            uploadUrl: requestUrl,
-            method: 'POST',
-            fileId: 'file',
-            fields: {
-            },
-            uploadHeaders: {
-              "AppToken": token
+          var requestUrl = (secure?"https://":"http://") + host + portStr + "/upload/" + encodeURIComponent(appName) + "/type/" + (os=="android"?"android": "ios") + "/version/" + encodeURIComponent(version) + "/" + checkSum;
+
+          console.log(requestUrl);
+
+          var request = require('request');
+
+          var formData = {
+            file: {
+              value:  fs.createReadStream(file),
+              options: {
+                filename: 'file',
+                contentType: 'application/octet-stream'
+              }
             }
           };
-
-          poster.post(file, options, function(err, data) {
-            if (!err) {
-              console.log(data);
+          request.post({url:requestUrl, formData: formData, headers: { 'AppToken': token }}, function optionalCallback(err, httpResponse, body) {
+            if (httpResponse && httpResponse.statusCode == 200) {
               process.exit(0);
             } else {
-              console.log("Can't upload app: " + err);
-              process.exit(1);
+              if (err) {
+                console.error('upload failed:', err);
+              }
+              process.exit(1)
             }
           });
+
         }
       });
 
