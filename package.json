@@ -1,6 +1,6 @@
 {
   "name": "pewee-cli",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "scripts": {
     "start": "node ./bin/client"
   },
@@ -13,7 +13,10 @@
     "commander": "*",
     "checksum": "*",
     "aes-helper": "*",
-    "request": "*"
+    "request": "*",
+    "adm-zip": "*",
+    "bplist-parser": "*",
+    "adbkit-apkreader": "*"
   },
   "author": "Vincent Saluzzo <vincentsaluzzo@gmail.com>",
   "contributors": [
