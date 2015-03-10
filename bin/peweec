@@ -4,10 +4,9 @@ var program = require('commander');
 var checksum = require('checksum');
 var fs = require('fs');
 var aes = require('aes-helper');
-var needle = require('needle');
 
 program
-  .version('0.0.4', '-V, --version')
+  .version('0.0.5', '-V, --version')
   .usage('[options] <file>')
   .option('-a, --appname <appname>', 'Uploaded file app name')
   .option('-o, --os <os>', 'Uploaded file os target')
