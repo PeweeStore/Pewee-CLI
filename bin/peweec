@@ -4,7 +4,6 @@ var program = require('commander');
 var checksum = require('checksum');
 var fs = require('fs');
 var aes = require('aes-helper');
-var needle = require('needle');
 
 program
   .version('0.0.4', '-V, --version')
